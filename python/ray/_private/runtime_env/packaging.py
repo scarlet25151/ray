@@ -48,7 +48,7 @@ MAC_OS_ZIP_HIDDEN_DIR_NAME = "__MACOSX"
 
 
 def _mib_string(num_bytes: float) -> str:
-    size_mib = float(num_bytes / 1024**2)
+    size_mib = float(num_bytes / 1024 ** 2)
     return f"{size_mib:.2f}MiB"
 
 
@@ -657,7 +657,16 @@ async def download_and_unpack_package(
                             "`pip install boto3` to fetch URIs in s3 "
                             "bucket."
                         )
-                    tp = {"client": boto3.client("s3")}
+                    endpoint_url = os.getenv("ENDPOINT_URL")
+                    if endpoint_url:
+                        tp = {
+                            "client": boto3.client(
+                                "s3",
+                                endpoint_url=endpoint_url,
+                            )
+                        }
+                    else:
+                        tp = {"client": boto3.client("s3")}
                 elif protocol == Protocol.GS:
                     try:
                         from google.cloud import storage  # noqa: F401
@@ -669,7 +678,7 @@ async def download_and_unpack_package(
                             "to fetch URIs in Google Cloud Storage bucket."
                         )
                 elif protocol == Protocol.FILE:
-                    pkg_uri = pkg_uri[len("file://") :]
+                    pkg_uri = pkg_uri[len("file://"):]
 
                     def open_file(uri, mode, *, transport_params=None):
                         return open(uri, mode)
